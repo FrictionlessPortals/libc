@@ -729,6 +729,7 @@ extern {
     pub fn __errno_location() -> *mut ::c_int;
     pub fn strerror_r(errnum: ::c_int, buf: *mut c_char,
                       buflen: ::size_t) -> ::c_int;
+    pub fn __errno_location() -> *mut ::c_int;
 
     // unistd.h
     pub fn pipe2(fds: *mut ::c_int, flags: ::c_int) -> ::c_int;
