@@ -369,6 +369,11 @@ fn test_openbsd(target: &str) {
         (struct_ == "siginfo_t" && field == "si_addr")
     });
 
+    cfg.skip_roundtrip(move |s| match s {
+        "dirent" | "utsname" | "utmp" => true,
+        _ => false,
+    });
+
     cfg.generate("../src/lib.rs", "main.rs");
 }
 
@@ -1450,10 +1455,12 @@ fn test_freebsd(target: &str) {
 
     let freebsd_ver = which_freebsd();
 
-    if let Some(12) = freebsd_ver {
-        // If the host is FreeBSD 12, run FreeBSD 12 tests
-        cfg.cfg("freebsd12", None);
-    }
+    match freebsd_ver {
+        Some(11) => cfg.cfg("freebsd11", None),
+        Some(12) => cfg.cfg("freebsd12", None),
+        Some(13) => cfg.cfg("freebsd13", None),
+        _ => &mut cfg,
+    };
 
     // Required for `getline`:
     cfg.define("_WITH_GETLINE", None);
@@ -1581,7 +1588,7 @@ fn test_freebsd(target: &str) {
             | "IP_RECVORIGDSTADDR"
             | "IPV6_ORIGDSTADDR"
             | "IPV6_RECVORIGDSTADDR"
-                if Some(12) != freebsd_ver =>
+                if Some(11) == freebsd_ver =>
             {
                 true
             }
@@ -1595,8 +1602,7 @@ fn test_freebsd(target: &str) {
             // These constants were removed in FreeBSD 11 (svn r262489),
             // and they've never had any legitimate use outside of the
             // base system anyway.
-            "CTL_MAXID" | "KERN_MAXID" | "HW_MAXID"
-            | "USER_MAXID" => true,
+            "CTL_MAXID" | "KERN_MAXID" | "HW_MAXID" | "USER_MAXID" => true,
 
             _ => false,
         }
@@ -2468,6 +2474,7 @@ fn which_freebsd() -> Option<i32> {
     match &stdout {
         s if s.starts_with("11") => Some(11),
         s if s.starts_with("12") => Some(12),
+        s if s.starts_with("13") => Some(13),
         _ => None,
     }
 }
